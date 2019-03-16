@@ -34,6 +34,7 @@
 #include <omp.h>
 #include <math.h>
 #include <stdint.h>
+#include <x86intrin.h>
 
 /* the following two definitions of DEBUGGING control whether or not
    debugging information is written out. To put the program into
@@ -44,7 +45,7 @@
 
 
 /* write 3d matrix to stdout */
-void write_out(int16_t *** a, int dim0, int dim1, int dim2)
+void write_out(float *** a, int dim0, int dim1, int dim2)
 {
   int i, j, k;
 
@@ -52,7 +53,7 @@ void write_out(int16_t *** a, int dim0, int dim1, int dim2)
     printf("Outer dimension number %d\n", i);
     for ( j = 0; j < dim1; j++ ) {
       for ( k = 0; k < dim2 - 1; k++ ) {
-        printf("%d, ", a[i][j][k]);
+        printf("%f, ", a[i][j][k]);
       }
       // print end of line
       printf("%f\n", a[i][j][dim2-1]);
@@ -263,10 +264,24 @@ void team_conv(int16_t *** image, int16_t **** kernels, float *** output,
                int width, int height, int nchannels, int nkernels,
                int kernel_order)
 {
-  // this call here is just dummy code
-  // insert your own code instead
-  multichannel_conv(image, kernels, output, width,
-                    height, nchannels, nkernels, kernel_order);
+  int h, w, x, y, c, m;
+
+  #pragma omp parallel for private(h, w, x, y, c, m)
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( w = 0; w < width; w++ ) {
+      for ( h = 0; h < height; h++ ) {
+        double sum = 0.0;
+        for ( c = 0; c < nchannels; c++ ) {
+          for ( x = 0; x < kernel_order; x++) {
+            for ( y = 0; y < kernel_order; y++ ) {
+              sum += (double) image[w+x][h+y][c] * (double) kernels[m][c][x][y];
+            }
+          }
+          output[m][w][h] = (float) sum;
+        }
+      }
+    }
+  }
 }
 
 int main(int argc, char ** argv)
@@ -313,9 +328,16 @@ int main(int argc, char ** argv)
 
   //DEBUGGING(write_out(A, a_dim1, a_dim2));
 
+  gettimeofday(&start_time, NULL);
+
   /* use a simple multichannel convolution routine to produce control result */
   multichannel_conv(image, kernels, control_output, width,
                     height, nchannels, nkernels, kernel_order);
+
+  gettimeofday(&stop_time, NULL);
+  mul_time = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
+    (stop_time.tv_usec - start_time.tv_usec);
+  printf("Control conv time: %lld microseconds\n", mul_time);
 
   /* record starting time of team's code*/
   gettimeofday(&start_time, NULL);
