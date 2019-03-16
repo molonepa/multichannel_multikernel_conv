@@ -99,13 +99,13 @@ float *** new_empty_3d_matrix_float(int dim0, int dim1, int dim2)
   return mat3d;
 }
 
-/* create new empty 4d int16_t matrix */
-int16_t **** new_empty_4d_matrix_int16(int dim0, int dim1, int dim2, int dim3)
+/* create new empty 4d float matrix */
+float **** new_empty_4d_matrix_int16(int dim0, int dim1, int dim2, int dim3)
 {
-  int16_t **** result = malloc(dim0 * sizeof(int16_t***));
-  int16_t *** mat1 = malloc(dim0 * dim1 * sizeof(int16_t**));
-  int16_t ** mat2 = malloc(dim0 * dim1 * dim2 * sizeof(int16_t*));
-  int16_t * mat3 = malloc(dim0 * dim1 * dim2 *dim3 * sizeof(int16_t));
+  float **** result = malloc(dim0 * sizeof(float***));
+  float *** mat1 = malloc(dim0 * dim1 * sizeof(float**));
+  float ** mat2 = malloc(dim0 * dim1 * dim2 * sizeof(float*));
+  float * mat3 = malloc(dim0 * dim1 * dim2 *dim3 * sizeof(float));
   int i, j, k;
 
 
@@ -123,10 +123,10 @@ int16_t **** new_empty_4d_matrix_int16(int dim0, int dim1, int dim2, int dim3)
 }
 
 /* create new empty 3d matrix */
-int16_t *** new_empty_3d_matrix_int16(int dim0, int dim1, int dim2)
+float *** new_empty_3d_matrix_int16(int dim0, int dim1, int dim2)
 {
-  int16_t **** mat4d;
-  int16_t *** mat3d;
+  float **** mat4d;
+  float *** mat3d;
 
   // create a 4d matrix with single first dimension
   mat4d = new_empty_4d_matrix_int16(1, dim0, dim1, dim2);
@@ -137,11 +137,11 @@ int16_t *** new_empty_3d_matrix_int16(int dim0, int dim1, int dim2)
 }
 
 /* take a copy of the matrix and return in a newly allocated matrix */
-int16_t **** copy_4d_matrix(int16_t **** source_matrix, int dim0,
+float **** copy_4d_matrix(float **** source_matrix, int dim0,
                             int dim1, int dim2, int dim3)
 {
   int i, j, k, l;
-  int16_t **** result = new_empty_4d_matrix_int16(dim0, dim1, dim2, dim3);
+  float **** result = new_empty_4d_matrix_int16(dim0, dim1, dim2, dim3);
 
   for ( i = 0; i < dim0; i++ ) {
     for ( j = 0; j < dim1; j++ ) {
@@ -156,9 +156,9 @@ int16_t **** copy_4d_matrix(int16_t **** source_matrix, int dim0,
 }
 
 /* create a matrix and fill it with random numbers */
-int16_t **** gen_random_4d_matrix_int16(int dim0, int dim1, int dim2, int dim3)
+float **** gen_random_4d_matrix_int16(int dim0, int dim1, int dim2, int dim3)
 {
-int16_t **** result;
+float **** result;
 int i, j, k, l;
 struct timeval seedtime;
   int seed;
@@ -173,7 +173,7 @@ struct timeval seedtime;
   /* fill the matrix with random numbers */
   const int range = 1 << 10; // 2^10
   //const int bias = 1 << 16; // 2^16
-  int16_t offset = 0.0;
+  float offset = 0.0;
   for ( i = 0; i < dim0; i++ ) {
     for ( j = 0; j < dim1; j++ ) {
       for ( k = 0; k < dim2; k++ ) {
@@ -193,10 +193,10 @@ struct timeval seedtime;
 }
 
 /* create a matrix and fill it with random numbers */
-int16_t *** gen_random_3d_matrix_int16(int dim0, int dim1, int dim2)
+float *** gen_random_3d_matrix_int16(int dim0, int dim1, int dim2)
 {
-  int16_t **** mat4d;
-  int16_t *** mat3d;
+  float **** mat4d;
+  float *** mat3d;
 
   // create a 4d matrix with single first dimension
   mat4d = gen_random_4d_matrix_int16(1, dim0, dim1, dim2);
@@ -236,7 +236,7 @@ void check_result(float *** result, float *** control,
 }
 
 /* the slow but correct version of matmul written by David */
-void multichannel_conv(int16_t *** image, int16_t **** kernels,
+void multichannel_conv(float *** image, float **** kernels,
 		       float *** output, int width, int height,
 		       int nchannels, int nkernels, int kernel_order)
 {
@@ -259,26 +259,36 @@ void multichannel_conv(int16_t *** image, int16_t **** kernels,
   }
 }
 
+
 /* the fast version of matmul written by the team */
-void team_conv(int16_t *** image, int16_t **** kernels, float *** output,
+void team_conv(float *** image, float **** kernels, float *** output,
                int width, int height, int nchannels, int nkernels,
                int kernel_order)
 {
   int h, w, x, y, c, m;
+  __attribute__((aligned(16))) float array[4];
 
   #pragma omp parallel for private(h, w, x, y, c, m)
   for ( m = 0; m < nkernels; m++ ) {
     for ( w = 0; w < width; w++ ) {
       for ( h = 0; h < height; h++ ) {
         double sum = 0.0;
-        for ( c = 0; c < nchannels; c++ ) {
+        for ( c = 0; c < nchannels; c+=4 ) {
           for ( x = 0; x < kernel_order; x++) {
             for ( y = 0; y < kernel_order; y++ ) {
+	      //__m128 imag = _mm_loadu_ps(&image[w+x][h+y][c]);
+	      //__m128 kernel = _mm_loadu_ps(&kernels[m][c][x][y]);
+	      //__m128 sum1 = _mm_mul_ps(imag, kernel);
+ 	      //_mm_store_ps(array, sum1);
+	      //sum += (array[0] + array[1] + array[2] + array[3]);	      
               sum += (double) image[w+x][h+y][c] * (double) kernels[m][c][x][y];
+	      sum += (double) image[w+x][h+y][c+1] * (double) kernels[m][c+1][x][y];
+	      sum += (double) image[w+x][h+y][c+2] * (double) kernels[m][c+2][x][y];
+	      sum += (double) image[w+x][h+y][c+3] * (double) kernels[m][c+3][x][y];
             }
           }
-          output[m][w][h] = (float) sum;
         }
+	output[m][w][h] = (float) sum;
       }
     }
   }
@@ -290,7 +300,7 @@ int main(int argc, char ** argv)
   //float kernels[M][C][K][K];
   //float output[M][W][H];
 
-  int16_t *** image, **** kernels;
+  float *** image, **** kernels;
   float *** control_output, *** output;
   long long mul_time;
   int width, height, kernel_order, nchannels, nkernels;
