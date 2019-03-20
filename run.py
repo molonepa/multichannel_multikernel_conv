@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 smallest = {
-            'width':        '16',
-            'height':       '16',
-            'kernel_order': '1',
-            'nchannels':    '32',
-            'nkernels':     '32'
+            'width':        '64',
+            'height':       '64',
+            'kernel_order': '3',
+            'nchannels':    '64',
+            'nkernels':     '64'
         }
 
 small = {
@@ -15,31 +15,31 @@ small = {
             'height':       '64',
             'kernel_order': '3',
             'nchannels':    '64',
-            'nkernels':     '32'
+            'nkernels':     '128'
         }
 
 medium = {
-            'width':        '128',
-            'height':       '128',
-            'kernel_order': '5',
-            'nchannels':    '128',
-            'nkernels':     '32'
+            'width':        '64',
+            'height':       '64',
+            'kernel_order': '3',
+            'nchannels':    '64',
+            'nkernels':     '256'
         }
 
 large = {
-            'width':        '256',
-            'height':       '256',
-            'kernel_order': '5',
-            'nchannels':    '256',
-            'nkernels':     '32'
+            'width':        '64',
+            'height':       '64',
+            'kernel_order': '3',
+            'nchannels':    '64',
+            'nkernels':     '512'
         }
 
 largest = {
-            'width':        '512',
-            'height':       '512',
-            'kernel_order': '5',
-            'nchannels':    '512',
-            'nkernels':     '32'
+            'width':        '64',
+            'height':       '64',
+            'kernel_order': '3',
+            'nchannels':    '64',
+            'nkernels':     '1024'
         }
 
 f = open("data.txt", "w")
@@ -97,9 +97,9 @@ bw = 0.35
 rect1 = plt.bar(index, t_original, bw, alpha=0.7, color='r', label='Original')
 rect2 = plt.bar(index + bw, t_optimized, bw, alpha=0.7, color='y', label='Optimized')
 
-plt.xlabel('Input size')
-plt.ylabel('Time (ns)')
-plt.xticks(index, ('Smallest', 'Small', 'Medium', 'Large', 'Largest'))
+plt.xlabel('Kernels')
+plt.ylabel('Time (microseconds)')
+plt.xticks(index, ('64', '128', '256', '512', '1024'))
 plt.legend()
 plt.tight_layout()
 plt.show()
