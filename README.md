@@ -51,10 +51,10 @@ IN YOUR SUBMISSION. All the submitted code should be your own.
 The work for this lab should be carried out in pairs, and each pair of
 students will make a joint submission. The submission should take the
 form of:
-(1) a working, well-written, commented piece of code, and
-(2) a document of a couple of pagaes describing the efforts made to
+1. a working, well-written, commented piece of code, and
+2. a document of a couple of pagaes describing the efforts made to
     make the code efficient.
-(3) a set of slides in PDF format that document your parallelization
+3. a set of slides in PDF format that document your parallelization
     and optimization strategy, and list you execution times on the
     standard input sizes.
 
@@ -81,9 +81,13 @@ Your routine should be capable of operating efficiently on a range of
 matrix sizes and shapes. The range of sizes we will consider are:
 
 image_width: 16..512
+
 image height: 16..512
+
 kernel order: 1, 3, 5, or 7
+
 number of channels: 32..2048 (always powers of 2)
+
 number of kernels: 32..2048 (always powers of 2)
 
 You must use the following test harness to test and time your code:
