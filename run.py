@@ -14,16 +14,16 @@ small = {
             'width':        '64',
             'height':       '64',
             'kernel_order': '3',
-            'nchannels':    '256',
-            'nkernels':     '256'
+            'nchannels':    '64',
+            'nkernels':     '32'
         }
 
 medium = {
             'width':        '128',
             'height':       '128',
             'kernel_order': '5',
-            'nchannels':    '256',
-            'nkernels':     '256'
+            'nchannels':    '128',
+            'nkernels':     '32'
         }
 
 large = {
@@ -31,15 +31,15 @@ large = {
             'height':       '256',
             'kernel_order': '5',
             'nchannels':    '256',
-            'nkernels':     '256'
+            'nkernels':     '32'
         }
 
 largest = {
             'width':        '512',
             'height':       '512',
             'kernel_order': '5',
-            'nchannels':    '256',
-            'nkernels':     '256'
+            'nchannels':    '512',
+            'nkernels':     '32'
         }
 
 f = open("data.txt", "w")
@@ -57,25 +57,35 @@ lines = out.split('\n')[0:2]
 t_original[0] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[0] = int(lines[1].split(': ')[1].split()[0])
 
+print("1/5")
+
 out = check_output(["./a.out", small['width'], small['height'], small['kernel_order'], small['nchannels'], small['nkernels']]).decode()
 lines = out.split('\n')[0:2]
 t_original[1] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[1] = int(lines[1].split(': ')[1].split()[0])
+
+print("2/5")
 
 out = check_output(["./a.out", medium['width'], medium['height'], medium['kernel_order'], medium['nchannels'], medium['nkernels']]).decode()
 lines = out.split('\n')[0:2]
 t_original[2] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[2] = int(lines[1].split(': ')[1].split()[0])
 
+print("3/5")
+
 out = check_output(["./a.out", large['width'], large['height'], large['kernel_order'], large['nchannels'], large['nkernels']]).decode()
 lines = out.split('\n')[0:2]
 t_original[3] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[3] = int(lines[1].split(': ')[1].split()[0])
 
+print("4/5")
+
 out = check_output(["./a.out", largest['width'], largest['height'], largest['kernel_order'], largest['nchannels'], largest['nkernels']]).decode()
 lines = out.split('\n')[0:2]
 t_original[4] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[4] = int(lines[1].split(': ')[1].split()[0])
+
+print("5/5")
 
 print("Done")
 print("Showing graph...")
