@@ -53,6 +53,7 @@ t_original = [0, 0, 0, 0, 0]
 t_optimized = [0, 0, 0, 0, 0]
 
 out = check_output(["./a.out", smallest['width'], smallest['height'], smallest['kernel_order'], smallest['nchannels'], smallest['nkernels']]).decode()
+print(out)
 lines = out.split('\n')[0:2]
 t_original[0] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[0] = int(lines[1].split(': ')[1].split()[0])
@@ -60,6 +61,7 @@ t_optimized[0] = int(lines[1].split(': ')[1].split()[0])
 print("1/5")
 
 out = check_output(["./a.out", small['width'], small['height'], small['kernel_order'], small['nchannels'], small['nkernels']]).decode()
+print(out)
 lines = out.split('\n')[0:2]
 t_original[1] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[1] = int(lines[1].split(': ')[1].split()[0])
@@ -67,6 +69,7 @@ t_optimized[1] = int(lines[1].split(': ')[1].split()[0])
 print("2/5")
 
 out = check_output(["./a.out", medium['width'], medium['height'], medium['kernel_order'], medium['nchannels'], medium['nkernels']]).decode()
+print(out)
 lines = out.split('\n')[0:2]
 t_original[2] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[2] = int(lines[1].split(': ')[1].split()[0])
@@ -74,6 +77,7 @@ t_optimized[2] = int(lines[1].split(': ')[1].split()[0])
 print("3/5")
 
 out = check_output(["./a.out", large['width'], large['height'], large['kernel_order'], large['nchannels'], large['nkernels']]).decode()
+print(out)
 lines = out.split('\n')[0:2]
 t_original[3] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[3] = int(lines[1].split(': ')[1].split()[0])
@@ -81,6 +85,7 @@ t_optimized[3] = int(lines[1].split(': ')[1].split()[0])
 print("4/5")
 
 out = check_output(["./a.out", largest['width'], largest['height'], largest['kernel_order'], largest['nchannels'], largest['nkernels']]).decode()
+print(out)
 lines = out.split('\n')[0:2]
 t_original[4] = int(lines[0].split(': ')[1].split()[0])
 t_optimized[4] = int(lines[1].split(': ')[1].split()[0])
