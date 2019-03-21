@@ -11,35 +11,35 @@ smallest = {
         }
 
 small = {
-            'width':        '64',
-            'height':       '64',
+            'width':        '128',
+            'height':       '128',
             'kernel_order': '3',
             'nchannels':    '64',
-            'nkernels':     '128'
+            'nkernels':     '64'
         }
 
 medium = {
-            'width':        '64',
-            'height':       '64',
+            'width':        '256',
+            'height':       '256',
             'kernel_order': '3',
             'nchannels':    '64',
-            'nkernels':     '256'
+            'nkernels':     '64'
         }
 
 large = {
-            'width':        '64',
-            'height':       '64',
+            'width':        '512',
+            'height':       '512',
             'kernel_order': '3',
             'nchannels':    '64',
-            'nkernels':     '512'
+            'nkernels':     '64'
         }
 
 largest = {
-            'width':        '64',
-            'height':       '64',
+            'width':        '1024',
+            'height':       '1024',
             'kernel_order': '3',
             'nchannels':    '64',
-            'nkernels':     '1024'
+            'nkernels':     '64'
         }
 
 f = open("data.txt", "w")
@@ -97,9 +97,9 @@ bw = 0.35
 rect1 = plt.bar(index, t_original, bw, alpha=0.7, color='r', label='Original')
 rect2 = plt.bar(index + bw, t_optimized, bw, alpha=0.7, color='y', label='Optimized')
 
-plt.xlabel('Kernels')
+plt.xlabel('Image size')
 plt.ylabel('Time (microseconds)')
-plt.xticks(index, ('64', '128', '256', '512', '1024'))
+plt.xticks(index, ('64*64', '128*128', '256*256', '512*512', '1024*1024'))
 plt.legend()
 plt.tight_layout()
 plt.show()
