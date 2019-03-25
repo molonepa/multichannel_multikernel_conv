@@ -42,6 +42,7 @@
 /*#define DEBUGGING(_x) _x */
 /* to stop the printing of debugging information, use the following line: */
 #define DEBUGGING(_x)
+#define STORE_LANE_PS(vec, addr, lane_no) *((double*)addr) = _mm_extract_ps((__m128)vec,lane_no);
 
 
 /* write 3d matrix to stdout */
@@ -220,6 +221,7 @@ void check_result(float *** result, float *** control,
     for ( j = 0; j < dim1; j++ ) {
       for ( k = 0; k < dim2; k++ ) {
         double diff = fabs(control[i][j][k] - result[i][j][k]);
+	//printf("%f  %f\n\n", control[i][j][k], result[i][j][k]);
         assert( diff >= 0.0 );
         sum_abs_diff = sum_abs_diff + diff;
       }
@@ -268,23 +270,39 @@ void team_conv(float *** image, float **** kernels, float *** output,
   int h, w, x, y, c, m;
   __attribute__((aligned(16))) float array[4];
 
+  int i, j, k, l;
+
+  float **** new = new_empty_4d_matrix_float(nkernels, kernel_order, kernel_order,nchannels);
+  #pragma omp parallel for private(i, k, j, l)
+  for( i = 0; i < nkernels; i++){
+    for( j = 0; j < nchannels; j++){
+      for( k = 0; k < kernel_order; k++){
+        for( l = 0; l < kernel_order; l++ ){
+          new[i][k][l][j] = kernels[i][j][k][l];
+        }
+      }
+    }
+  }
+
   #pragma omp parallel for private(h, w, x, y, c, m)
   for ( m = 0; m < nkernels; m++ ) {
     for ( w = 0; w < width; w++ ) {
       for ( h = 0; h < height; h++ ) {
         double sum = 0.0;
-        for ( c = 0; c < nchannels; c+=4 ) {
+	__m128 sum4 = _mm_setzero_ps();
+        for ( c = 0; c + 4 <= nchannels; c+=4 ) {
           for ( x = 0; x < kernel_order; x++) {
             for ( y = 0; y < kernel_order; y++ ) {
-	      //__m128 imag = _mm_loadu_ps(&image[w+x][h+y][c]);
-	      //__m128 kernel = _mm_loadu_ps(&kernels[m][c][x][y]);
-	      //__m128 sum1 = _mm_mul_ps(imag, kernel);
- 	      //_mm_store_ps(array, sum1);
-	      //sum += (array[0] + array[1] + array[2] + array[3]);	      
-              sum += (double) image[w+x][h+y][c] * (double) kernels[m][c][x][y];
-	      sum += (double) image[w+x][h+y][c+1] * (double) kernels[m][c+1][x][y];
-	      sum += (double) image[w+x][h+y][c+2] * (double) kernels[m][c+2][x][y];
-	      sum += (double) image[w+x][h+y][c+3] * (double) kernels[m][c+3][x][y];
+	      __m128 imag = _mm_loadu_ps(&image[w+x][h+y][c]);
+	      __m128 kernel = _mm_loadu_ps(&new[m][x][y][c]);
+	      __m128 sum1 = _mm_mul_ps(imag, kernel);
+	      sum4 += _mm_add_ps(sum1, sum4);
+	      float a[4];
+	 
+	      sum4 = _mm_hadd_ps(sum1, sum1);
+	      sum4 = _mm_hadd_ps(sum4, sum4);
+	      _mm_store_ps(a, sum4);
+	      sum += a[0];
             }
           }
         }
@@ -302,7 +320,7 @@ int main(int argc, char ** argv)
 
   float *** image, **** kernels;
   float *** control_output, *** output;
-  long long mul_time;
+  long long mul_time1, mul_time2;
   int width, height, kernel_order, nchannels, nkernels;
   struct timeval start_time;
   struct timeval stop_time;
@@ -345,9 +363,9 @@ int main(int argc, char ** argv)
                     height, nchannels, nkernels, kernel_order);
 
   gettimeofday(&stop_time, NULL);
-  mul_time = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
+  mul_time1 = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
     (stop_time.tv_usec - start_time.tv_usec);
-  printf("Control conv time: %lld microseconds\n", mul_time);
+  printf("Control conv time: %lld microseconds\n", mul_time1);
 
   /* record starting time of team's code*/
   gettimeofday(&start_time, NULL);
@@ -358,9 +376,11 @@ int main(int argc, char ** argv)
 
   /* record finishing time */
   gettimeofday(&stop_time, NULL);
-  mul_time = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
+  mul_time2 = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
     (stop_time.tv_usec - start_time.tv_usec);
-  printf("Team conv time: %lld microseconds\n", mul_time);
+  printf("Team conv time: %lld microseconds\n", mul_time2);
+
+  printf("It is %lld times faster.", mul_time1 / mul_time2 );
 
   DEBUGGING(write_out(output, nkernels, width, height));
 
@@ -370,4 +390,3 @@ int main(int argc, char ** argv)
 
   return 0;
 }
-
