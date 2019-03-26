@@ -286,6 +286,7 @@ void team_conv(float *** image, float **** kernels, float *** output,
         double sum = 0.0;
 	float temp[4];
 	__m128 sum_vec = _mm_setzero_ps();
+	__m128 prod_vec = _mm_setzero_ps();
         for ( c = 0; c + 4 <= nchannels; c+=4 ) {
           for ( x = 0; x < kernel_order; x++) {
             for ( y = 0; y < kernel_order; y++ ) {
@@ -293,7 +294,6 @@ void team_conv(float *** image, float **** kernels, float *** output,
 	      __m128 kern_vec = _mm_loadu_ps(&new[m][x][y][c]);
 	      __m128 prod_vec = _mm_mul_ps(img_vec, kern_vec);
 	      sum_vec += _mm_add_ps(prod_vec, sum_vec);
-
 	      sum_vec = _mm_hadd_ps(prod_vec, prod_vec);
 	      sum_vec = _mm_hadd_ps(sum_vec, sum_vec);
 	      _mm_store_ps(temp, sum_vec);
