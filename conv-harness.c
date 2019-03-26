@@ -42,8 +42,6 @@
 /*#define DEBUGGING(_x) _x */
 /* to stop the printing of debugging information, use the following line: */
 #define DEBUGGING(_x)
-#define STORE_LANE_PS(vec, addr, lane_no) *((double*)addr) = _mm_extract_ps((__m128)vec,lane_no);
-
 
 /* write 3d matrix to stdout */
 void write_out(float *** a, int dim0, int dim1, int dim2)
@@ -267,10 +265,7 @@ void team_conv(float *** image, float **** kernels, float *** output,
                int width, int height, int nchannels, int nkernels,
                int kernel_order)
 {
-  int h, w, x, y, c, m;
-  __attribute__((aligned(16))) float array[4];
-
-  int i, j, k, l;
+  int h, w, x, y, c, m, i, j, k, l;
 
   float **** new = new_empty_4d_matrix_float(nkernels, kernel_order, kernel_order,nchannels);
   #pragma omp parallel for private(i, k, j, l)
@@ -289,20 +284,20 @@ void team_conv(float *** image, float **** kernels, float *** output,
     for ( w = 0; w < width; w++ ) {
       for ( h = 0; h < height; h++ ) {
         double sum = 0.0;
-	__m128 sum4 = _mm_setzero_ps();
+	float temp[4];
+	__m128 sum_vec = _mm_setzero_ps();
         for ( c = 0; c + 4 <= nchannels; c+=4 ) {
           for ( x = 0; x < kernel_order; x++) {
             for ( y = 0; y < kernel_order; y++ ) {
-	      __m128 imag = _mm_loadu_ps(&image[w+x][h+y][c]);
-	      __m128 kernel = _mm_loadu_ps(&new[m][x][y][c]);
-	      __m128 sum1 = _mm_mul_ps(imag, kernel);
-	      sum4 += _mm_add_ps(sum1, sum4);
-	      float a[4];
-	 
-	      sum4 = _mm_hadd_ps(sum1, sum1);
-	      sum4 = _mm_hadd_ps(sum4, sum4);
-	      _mm_store_ps(a, sum4);
-	      sum += a[0];
+	      __m128 img_vec = _mm_loadu_ps(&image[w+x][h+y][c]);
+	      __m128 kern_vec = _mm_loadu_ps(&new[m][x][y][c]);
+	      __m128 prod_vec = _mm_mul_ps(img_vec, kern_vec);
+	      sum_vec += _mm_add_ps(prod_vec, sum_vec);
+
+	      sum_vec = _mm_hadd_ps(prod_vec, prod_vec);
+	      sum_vec = _mm_hadd_ps(sum_vec, sum_vec);
+	      _mm_store_ps(temp, sum_vec);
+	      sum += temp[0];
             }
           }
         }
