@@ -231,7 +231,7 @@ void check_result(float *** result, float *** control,
             sum_abs_diff, EPSILON);
   }
   else {
-    printf("COMMENT: sum of absolute differences (%f)  within acceptable range (%f)\n", sum_abs_diff, EPSILON);
+    printf("COMMENT: sum of absolute differences (%f)  within acceptable range (%f)", sum_abs_diff, EPSILON);
   }
 }
 
@@ -268,7 +268,7 @@ void team_conv(float *** image, float **** kernels, float *** output,
   int h, w, x, y, c, m, i, j, k, l;
 
   float **** new = new_empty_4d_matrix_float(nkernels, kernel_order, kernel_order,nchannels);
-  #pragma omp parallel for private(i, k, j, l)
+  #pragma omp parallel for private(i, j, k, l)
   for( i = 0; i < nkernels; i++){
     for( j = 0; j < nchannels; j++){
       for( k = 0; k < kernel_order; k++){
@@ -292,8 +292,7 @@ void team_conv(float *** image, float **** kernels, float *** output,
             for ( y = 0; y < kernel_order; y++ ) {
 	      __m128 img_vec = _mm_loadu_ps(&image[w+x][h+y][c]);
 	      __m128 kern_vec = _mm_loadu_ps(&new[m][x][y][c]);
-	      __m128 prod_vec = _mm_mul_ps(img_vec, kern_vec);
-	      sum_vec += _mm_add_ps(prod_vec, sum_vec);
+	      prod_vec = _mm_mul_ps(img_vec, kern_vec);
 	      sum_vec = _mm_hadd_ps(prod_vec, prod_vec);
 	      sum_vec = _mm_hadd_ps(sum_vec, sum_vec);
 	      _mm_store_ps(temp, sum_vec);
@@ -315,7 +314,7 @@ int main(int argc, char ** argv)
 
   float *** image, **** kernels;
   float *** control_output, *** output;
-  long long mul_time1, mul_time2;
+  long long mul_time;
   int width, height, kernel_order, nchannels, nkernels;
   struct timeval start_time;
   struct timeval stop_time;
@@ -358,9 +357,9 @@ int main(int argc, char ** argv)
                     height, nchannels, nkernels, kernel_order);
 
   gettimeofday(&stop_time, NULL);
-  mul_time1 = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
+  mul_time = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
     (stop_time.tv_usec - start_time.tv_usec);
-  printf("Control conv time: %lld microseconds\n", mul_time1);
+  printf("Control conv time: %lld microseconds\n", mul_time);
 
   /* record starting time of team's code*/
   gettimeofday(&start_time, NULL);
@@ -371,11 +370,9 @@ int main(int argc, char ** argv)
 
   /* record finishing time */
   gettimeofday(&stop_time, NULL);
-  mul_time2 = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
+  mul_time = (stop_time.tv_sec - start_time.tv_sec) * 1000000L +
     (stop_time.tv_usec - start_time.tv_usec);
-  printf("Team conv time: %lld microseconds\n", mul_time2);
-
-  printf("It is %lld times faster.", mul_time1 / mul_time2 );
+  printf("Team conv time: %lld microseconds\n", mul_time);
 
   DEBUGGING(write_out(output, nkernels, width, height));
 
